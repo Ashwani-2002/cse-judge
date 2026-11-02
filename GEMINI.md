@@ -1,6 +1,6 @@
 # CSE Judge — Agent Instructions & Engineering Guidelines
 
-This document governs all AI-assisted development on **CSE Judge**. It defines the project context, technical stack, core architectural invariants, engineering behaviors, and verification protocols. Every agent session must adhere to these instructions.
+This document governs all AI-assisted development on **CSE Judge**. It defines the project context, technical stack, core architectural invariants, engineering behaviors, Git workflows, and verification protocols. Every agent session must adhere to these instructions. `GEMINI.md` serves as the primary source of truth for project-wide instructions; whenever project-wide instructions are changed, both `GEMINI.md` and `CLAUDE.md` must be updated to maintain strict consistency.
 
 ---
 
@@ -29,7 +29,8 @@ When instructions conflict, resolve them using the following strict precedence:
 - **OS:** Ubuntu Linux
 - **Editor / Workspace:** VS Code
 - **AI Coding Agent:** Antigravity CLI
-- **Testing & Run Target:** Physical Android device connected via ADB.
+- **Testing & Run Target:** Physical Android device (Realme Narzo 90 5G / `RMX5111`) connected via ADB.
+- **Consistent Configuration:** Package name `com.csejudge.app` and standard debug signing configuration are used consistently across all builds.
 - **Environment Invariant:** **No Android Studio and no Android emulator** are used or expected in the standard workflow. All builds, tests, installations, and log inspections must execute via command-line tools (`./gradlew`, `adb`).
 
 ### Technology Stack
@@ -108,8 +109,15 @@ When errors or build failures occur:
 
 ### 4.6 Verification & Testing Standards
 - **Build Checks:** Use the Gradle wrapper (`./gradlew assembleDebug`, `./gradlew testDebugUnitTest`, etc.).
-- **Physical Device Deployment:** When a device is connected via ADB, install builds (`adb install -r <apk-path>`) and check runtime behavior.
-- **Runtime Verification:** Use `adb logcat -d` filtered by application package/tag to inspect crashes, ANRs, or ViewModel/Room exceptions.
+- **Automated Physical Device Deployment Workflow:**
+  After every successful debug build:
+  1. Check device connectivity via `adb devices` (Target: Realme Narzo 90 5G / `RMX5111`).
+  2. Automatically install/update the app using `adb install -r <apk-path>`.
+  3. Never uninstall the existing application; preserve existing application data.
+  4. Do not prompt the user for manual installation unless Android itself requires interactive user confirmation or an error blocks installation.
+  5. Automatically launch the application using ADB (`adb shell am start -n com.csejudge.app/.MainActivity`).
+  6. Verify runtime execution and inspect `adb logcat` for startup crashes or exceptions.
+  7. Report build, installation, and launch results in the task completion summary.
 - **Integrity in Reporting:**
   - Never fabricate build outputs, test results, or verification claims.
   - Explicitly distinguish between:
@@ -125,11 +133,32 @@ When errors or build failures occur:
 2. **Pre-Implementation Inspection:** Always check the current directory structure, Gradle setup, dependencies, and existing source files before introducing new files or code.
 3. **Preserve User Data:** Never perform destructive actions on local databases, device storage, or configuration files without explicit user consent.
 4. **Architectural Transparency:** Briefly explain major architectural choices (e.g., entity relationships, navigation routes, state management paradigms) before writing implementation code.
-5. **Living Documentation:** Keep relevant documentation, schema definitions, and instructions updated as the codebase evolves.
+5. **Living Documentation:** Keep relevant documentation, schema definitions, and instructions updated as the codebase evolves (keeping both `GEMINI.md` and `CLAUDE.md` in sync).
 
 ---
 
-## 6. Antigravity Agent Protocol
+## 6. Single-Branch Git Workflow & Safety
+
+1. **Main Branch Only:**
+   - Use only the `main` branch for regular project development.
+   - Do not create feature, bugfix, refactor, or documentation branches.
+2. **Direct Milestone Commits:**
+   - Commit meaningful, verified milestones directly to `main`.
+   - Never commit broken or unverified code.
+3. **Commit Checkpoints Before Risky Changes:**
+   - Before undertaking risky refactoring or speculative implementations, create a Git commit checkpoint so work can be safely referenced or restored if needed.
+4. **Pre-Commit Review:**
+   - Always review `git status`, `git diff`, and staged changes prior to committing to ensure clean diffs and prevent committing unintended files, secrets, or temporary artifacts.
+5. **Regular Remote Synchronization:**
+   - Push verified commits regularly to the GitHub remote `origin` (`origin/main`).
+6. **Data Safety & Non-Destructive Git Rules:**
+   - **Never Discard Uncommitted Changes:** Never discard, overwrite, or stash away uncommitted user changes without explicit user approval.
+   - **No Destructive Commands or History Rewriting:** Never execute destructive Git commands (`git reset --hard`, `git clean -f`, `git checkout -- .`, `git restore .`) or rewrite history (`git push --force`, interactive rebase of pushed commits) without explicit user approval.
+   - **Preserve Safety & Security Rules:** Preserve all Git safety and credential security rules. Never commit secrets, tokens, credentials, or untracked environment configs.
+
+---
+
+## 7. Antigravity Agent Protocol
 
 - **Session Start:** Read this `GEMINI.md` file at the beginning of each session to align with project rules.
 - **Planning vs. Direct Action:**
