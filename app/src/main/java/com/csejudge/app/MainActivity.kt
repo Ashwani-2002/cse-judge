@@ -4,22 +4,41 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.csejudge.app.data.local.AppDatabase
+import com.csejudge.app.data.repository.PracticeHistoryRepositoryImpl
+import com.csejudge.app.data.repository.QuestionBankRepositoryImpl
+import com.csejudge.app.navigation.AppNavHost
+import com.csejudge.app.ui.practice.PracticeColors
+import com.csejudge.app.ui.practice.PracticeViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val practiceViewModel: PracticeViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val questionBankRepository = QuestionBankRepositoryImpl.create(applicationContext)
+                val database = AppDatabase.getInstance(applicationContext)
+                val practiceHistoryRepository = PracticeHistoryRepositoryImpl(database.practiceDao())
+                return PracticeViewModel(
+                    questionBankRepository = questionBankRepository,
+                    practiceHistoryRepository = practiceHistoryRepository
+                ) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -27,23 +46,12 @@ class MainActivity : ComponentActivity() {
             CSEJudgeTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = Color(0xFFFBFBFD)
+                    containerColor = PracticeColors.ScreenBackground
                 ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Your first Android app",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            ),
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    AppNavHost(
+                        practiceViewModel = practiceViewModel,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }
@@ -54,27 +62,13 @@ class MainActivity : ComponentActivity() {
 fun CSEJudgeTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = lightColorScheme(
-            background = Color(0xFFFBFBFD),
-            onBackground = Color(0xFF1C1B1F),
-            surface = Color(0xFFFFFFFF),
-            onSurface = Color(0xFF1C1B1F)
+            background = PracticeColors.ScreenBackground,
+            onBackground = PracticeColors.TextPrimary,
+            surface = PracticeColors.CardSurface,
+            onSurface = PracticeColors.TextPrimary,
+            primary = PracticeColors.PrimaryNavy,
+            onPrimary = PracticeColors.OnPrimary
         ),
         content = content
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview() {
-    CSEJudgeTheme {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Your first Android app",
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-    }
 }
