@@ -16,6 +16,11 @@ class NavRoutesTest {
         val bookmarkMicrothemesRoute = Screen.BookmarkMicrothemes.route
         val bookmarkQuestionsRoute = Screen.BookmarkQuestions.route
         val analysisRoute = Screen.Analysis.route
+        val testsLandingRoute = Screen.TestsLanding.route
+        val testInstructionsRoute = Screen.TestInstructions.route
+        val testActiveRoute = Screen.TestActive.route
+        val testReportRoute = Screen.TestReport.route
+        val pastTestsRoute = Screen.PastTests.route
 
         assertEquals("home", homeRoute)
         assertEquals("practice_filter", filterRoute)
@@ -24,6 +29,11 @@ class NavRoutesTest {
         assertEquals("bookmark_microthemes/{subject}", bookmarkMicrothemesRoute)
         assertEquals("bookmark_questions/{subject}/{microtheme}", bookmarkQuestionsRoute)
         assertEquals("analysis", analysisRoute)
+        assertEquals("tests_landing", testsLandingRoute)
+        assertEquals("test_instructions/{testType}", testInstructionsRoute)
+        assertEquals("test_active", testActiveRoute)
+        assertEquals("test_report/{testId}", testReportRoute)
+        assertEquals("past_tests", pastTestsRoute)
 
         val routes = listOf(
             homeRoute,
@@ -32,11 +42,25 @@ class NavRoutesTest {
             bookmarkSubjectsRoute,
             bookmarkMicrothemesRoute,
             bookmarkQuestionsRoute,
-            analysisRoute
+            analysisRoute,
+            testsLandingRoute,
+            testInstructionsRoute,
+            testActiveRoute,
+            testReportRoute,
+            pastTestsRoute
         )
 
         routes.forEach { assertTrue(it.isNotBlank()) }
         assertEquals(routes.size, routes.distinct().size)
+    }
+
+    @Test
+    fun testTestRoutesCreationAndEncoding() {
+        val fltRoute = Screen.TestInstructions.createRoute("FULL_LENGTH")
+        val reportRoute = Screen.TestReport.createRoute("uuid-1234-test")
+
+        assertEquals("test_instructions/FULL_LENGTH", fltRoute)
+        assertEquals("test_report/uuid-1234-test", reportRoute)
     }
 
     @Test

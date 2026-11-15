@@ -161,4 +161,29 @@ class HomeScreenTest {
         analysisTile.performClick()
         assertTrue(analysisClicked)
     }
+
+    @Test
+    fun testTestsTileIsDisplayedAtPositionTwoAndClickable() {
+        var testsClicked = false
+
+        composeTestRule.setContent {
+            HomeScreen(
+                onNavigateToPractice = {},
+                onNavigateToTests = { testsClicked = true },
+                onNavigateToBookmarks = {},
+                onNavigateToAnalysis = {}
+            )
+        }
+
+        val testsTile = composeTestRule.onNodeWithTag("TestsTile")
+        testsTile.assertIsDisplayed()
+        testsTile.assertHasClickAction()
+
+        composeTestRule.onNodeWithText("Tests").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Take timed Full Length (100 Qs) or Half Length (50 Qs) tests and review past reports.")
+            .assertIsDisplayed()
+
+        testsTile.performClick()
+        assertTrue(testsClicked)
+    }
 }

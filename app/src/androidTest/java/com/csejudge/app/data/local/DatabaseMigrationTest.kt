@@ -67,9 +67,9 @@ class DatabaseMigrationTest {
         v1Sqlite.version = 1
         v1Sqlite.close()
 
-        // Step 2: Open the database using Room version 2 with MIGRATION_1_2
+        // Step 2: Open the database using Room version 3 with MIGRATION_1_2 and MIGRATION_2_3
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
 
@@ -107,6 +107,87 @@ class DatabaseMigrationTest {
 
         // Verify attempt history remains untouched after new bookmark operations on migrated DB
         assertEquals(2, practiceDao.getAttemptCount())
+
+        migratedDb.close()
+    }
+
+    @Test
+    fun testMigrationFromVersion2ToVersion3PreservesExistingDataAndEnablesTests() = runBlocking {
+        // Step 1: Create a Version 2 database manually with Version 2 schema (attempted_questions + bookmarked_questions)
+        val dbPath = context.getDatabasePath(dbName)
+        dbPath.parentFile?.mkdirs()
+
+        val v2Sqlite = SQLiteDatabase.openOrCreateDatabase(dbPath, null)
+        v2Sqlite.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `attempted_questions` (
+                `question_id` TEXT NOT NULL,
+                `selected_answer` TEXT NOT NULL,
+                `is_correct` INTEGER NOT NULL,
+                `attempted_at` INTEGER NOT NULL,
+                PRIMARY KEY(`question_id`)
+            )
+            """.trimIndent()
+        )
+        v2Sqlite.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `bookmarked_questions` (
+                `question_id` TEXT NOT NULL,
+                `bookmarked_at` INTEGER NOT NULL,
+                PRIMARY KEY(`question_id`)
+            )
+            """.trimIndent()
+        )
+
+        // Seed Version 2 user data
+        v2Sqlite.execSQL("INSERT INTO attempted_questions (question_id, selected_answer, is_correct, attempted_at) VALUES ('POL00010', 'B', 1, 5000)")
+        v2Sqlite.execSQL("INSERT INTO bookmarked_questions (question_id, bookmarked_at) VALUES ('POL00010', 5500)")
+
+        v2Sqlite.version = 2
+        v2Sqlite.close()
+
+        // Step 2: Open with Room Version 3 and MIGRATION_2_3
+        val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .allowMainThreadQueries()
+            .build()
+
+        // Step 3: Verify existing attempt and bookmark records are 100% preserved
+        val practiceDao = migratedDb.practiceDao()
+        val bookmarkDao = migratedDb.bookmarkDao()
+        val testDao = migratedDb.testDao()
+
+        assertEquals(1, practiceDao.getAttemptCount())
+        assertEquals("B", practiceDao.getAttempt("POL00010")?.selectedAnswer)
+        assertEquals(1, bookmarkDao.getBookmarkCount())
+        assertTrue(bookmarkDao.isBookmarked("POL00010"))
+
+        // Step 4: Verify new test tables are operational
+        assertEquals(0, testDao.getCompletedTestCount())
+
+        val testEntity = TestEntity(
+            testId = "test_uuid_1",
+            testType = "FULL_LENGTH",
+            startedAt = 6000L,
+            completedAt = 7000L,
+            durationSeconds = 3600,
+            totalQuestions = 100,
+            attemptedCount = 80,
+            correctCount = 60,
+            incorrectCount = 20,
+            unansweredCount = 20,
+            score = 106.67,
+            maxScore = 200.0,
+            accuracy = 75.0,
+            status = "COMPLETED"
+        )
+        testDao.insertTest(testEntity)
+
+        assertEquals(1, testDao.getCompletedTestCount())
+        val retrieved = testDao.getTestById("test_uuid_1")
+        assertNotNull(retrieved)
+        assertEquals("FULL_LENGTH", retrieved?.testType)
+        assertEquals(106.67, retrieved?.score ?: 0.0, 0.01)
 
         migratedDb.close()
     }

@@ -35,4 +35,19 @@ sealed class Screen(val route: String) {
 
     // Performance Analysis Dashboard
     data object Analysis : Screen("analysis")
+
+    // Tests Module Navigation
+    data object TestsLanding : Screen("tests_landing")
+
+    data object TestInstructions : Screen("test_instructions/{testType}") {
+        fun createRoute(testType: String): String = "test_instructions/${RouteUtils.encode(testType)}"
+    }
+
+    data object TestActive : Screen("test_active")
+
+    data object TestReport : Screen("test_report/{testId}") {
+        fun createRoute(testId: String): String = "test_report/${RouteUtils.encode(testId)}"
+    }
+
+    data object PastTests : Screen("past_tests")
 }

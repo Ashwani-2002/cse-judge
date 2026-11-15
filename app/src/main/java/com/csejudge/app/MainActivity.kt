@@ -18,6 +18,7 @@ import com.csejudge.app.data.repository.AnalysisRepositoryImpl
 import com.csejudge.app.data.repository.BookmarkRepositoryImpl
 import com.csejudge.app.data.repository.PracticeHistoryRepositoryImpl
 import com.csejudge.app.data.repository.QuestionBankRepositoryImpl
+import com.csejudge.app.data.repository.TestRepositoryImpl
 import com.csejudge.app.data.repository.ThemeRepositoryImpl
 import com.csejudge.app.navigation.AppNavHost
 import com.csejudge.app.ui.analysis.AnalysisViewModel
@@ -25,6 +26,7 @@ import com.csejudge.app.ui.bookmark.BookmarkViewModel
 import com.csejudge.app.ui.practice.CSEJudgeTheme
 import com.csejudge.app.ui.practice.PracticeColors
 import com.csejudge.app.ui.practice.PracticeViewModel
+import com.csejudge.app.ui.test.TestViewModel
 import com.csejudge.app.ui.theme.ThemeViewModel
 
 class MainActivity : ComponentActivity() {
@@ -104,6 +106,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val testViewModel: TestViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val questionBankRepository = QuestionBankRepositoryImpl.getInstance(applicationContext)
+                val database = AppDatabase.getInstance(applicationContext)
+                val practiceHistoryRepository = PracticeHistoryRepositoryImpl(database.practiceDao())
+                val testRepository = TestRepositoryImpl(database)
+                val bookmarkRepository = BookmarkRepositoryImpl(
+                    bookmarkDao = database.bookmarkDao(),
+                    questionBankRepository = questionBankRepository
+                )
+                return TestViewModel(
+                    questionBankRepository = questionBankRepository,
+                    practiceHistoryRepository = practiceHistoryRepository,
+                    testRepository = testRepository,
+                    bookmarkRepository = bookmarkRepository
+                ) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -119,6 +143,7 @@ class MainActivity : ComponentActivity() {
                         practiceViewModel = practiceViewModel,
                         bookmarkViewModel = bookmarkViewModel,
                         analysisViewModel = analysisViewModel,
+                        testViewModel = testViewModel,
                         isDarkMode = isDarkMode,
                         onToggleTheme = { themeViewModel.toggleTheme(isDarkMode) },
                         modifier = Modifier.padding(innerPadding)

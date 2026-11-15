@@ -47,6 +47,7 @@ import kotlin.math.sin
 @Composable
 fun HomeScreen(
     onNavigateToPractice: () -> Unit,
+    onNavigateToTests: () -> Unit = {},
     onNavigateToBookmarks: () -> Unit = {},
     onNavigateToAnalysis: () -> Unit = {},
     bookmarkCount: Int = 0,
@@ -107,14 +108,21 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Prominent Rectangular Tile: Practice problems
+            // 1. Practice problems
             PracticeProblemsTile(
                 onClick = onNavigateToPractice
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Prominent Rectangular Tile: Bookmarked Questions
+            // 2. Tests
+            TestsTile(
+                onClick = onNavigateToTests
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 3. Bookmarked Questions
             BookmarkedQuestionsTile(
                 bookmarkCount = bookmarkCount,
                 onClick = onNavigateToBookmarks
@@ -122,7 +130,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Prominent Rectangular Tile: Analysis
+            // 4. Analysis
             AnalysisTile(
                 onClick = onNavigateToAnalysis
             )
@@ -295,6 +303,73 @@ fun PracticeProblemsTile(
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Practice prelims questions by topic, microtheme, or across all subjects at random.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    ),
+                    color = PracticeColors.TextSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Navigation indicator chevron
+            Surface(
+                modifier = Modifier.size(36.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = PracticeColors.PrimaryNavyLight
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "→",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PracticeColors.PrimaryNavy
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Prominent rectangular tile for the Tests feature.
+ * Positioned as Tile 2 on the Home screen.
+ */
+@Composable
+fun TestsTile(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("TestsTile"),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = PracticeColors.CardSurface),
+        border = BorderStroke(1.dp, PracticeColors.BorderNeutral),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Tests",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    ),
+                    color = PracticeColors.PrimaryNavy
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Take timed Full Length (100 Qs) or Half Length (50 Qs) tests and review past reports.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 14.sp,
                         lineHeight = 20.sp

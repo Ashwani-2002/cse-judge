@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.csejudge.app.data.model.TestType
 import com.csejudge.app.ui.analysis.AnalysisScreen
 import com.csejudge.app.ui.analysis.AnalysisViewModel
 import com.csejudge.app.ui.bookmark.BookmarkMicrothemesScreen
@@ -20,6 +21,12 @@ import com.csejudge.app.ui.home.HomeScreen
 import com.csejudge.app.ui.practice.PracticeFilterScreen
 import com.csejudge.app.ui.practice.PracticeQuestionScreen
 import com.csejudge.app.ui.practice.PracticeViewModel
+import com.csejudge.app.ui.test.PastTestsScreen
+import com.csejudge.app.ui.test.TestInstructionsScreen
+import com.csejudge.app.ui.test.TestQuestionScreen
+import com.csejudge.app.ui.test.TestReportScreen
+import com.csejudge.app.ui.test.TestViewModel
+import com.csejudge.app.ui.test.TestsLandingScreen
 
 /**
  * Top-level Navigation Host for CSE Judge.
@@ -28,20 +35,25 @@ import com.csejudge.app.ui.practice.PracticeViewModel
  *
  * Flows:
  * 1. Normal Practice: Home -> Practice Filter -> Practice Question
- * 2. Bookmarked Questions: Home -> Bookmark Subjects -> Bookmark Microthemes -> Bookmark Questions
- * 3. Performance Analysis: Home -> Analysis Dashboard
+ * 2. Tests Module: Home -> Tests Landing -> Instructions -> Active Test -> Test Report / Past Tests
+ * 3. Bookmarked Questions: Home -> Bookmark Subjects -> Bookmark Microthemes -> Bookmark Questions
+ * 4. Performance Analysis: Home -> Analysis Dashboard
  */
 @Composable
 fun AppNavHost(
     practiceViewModel: PracticeViewModel,
     bookmarkViewModel: BookmarkViewModel? = null,
     analysisViewModel: AnalysisViewModel? = null,
+    testViewModel: TestViewModel? = null,
     isDarkMode: Boolean = false,
     onToggleTheme: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     modifier: Modifier = Modifier
 ) {
     val bookmarkUiState by (bookmarkViewModel?.uiState?.collectAsState()
+        ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
+
+    val testUiState by (testViewModel?.uiState?.collectAsState()
         ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
 
     NavHost(
@@ -53,6 +65,9 @@ fun AppNavHost(
             HomeScreen(
                 onNavigateToPractice = {
                     navController.navigate(Screen.PracticeFilter.route)
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestsLanding.route)
                 },
                 onNavigateToBookmarks = {
                     navController.navigate(Screen.BookmarkSubjects.route)
@@ -159,6 +174,103 @@ fun AppNavHost(
             if (analysisViewModel != null) {
                 AnalysisScreen(
                     viewModel = analysisViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        // Tests Module Destination 1: Landing Screen
+        composable(Screen.TestsLanding.route) {
+            TestsLandingScreen(
+                onSelectTestType = { testType ->
+                    navController.navigate(Screen.TestInstructions.createRoute(testType.name))
+                },
+                onNavigateToPastTests = {
+                    navController.navigate(Screen.PastTests.route)
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+                abortedMessage = testUiState?.abortReason,
+                onDismissAbortedMessage = {
+                    testViewModel?.clearAbortedState()
+                }
+            )
+        }
+
+        // Tests Module Destination 2: Instructions Screen
+        composable(
+            route = Screen.TestInstructions.route,
+            arguments = listOf(
+                navArgument("testType") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val encodedType = backStackEntry.arguments?.getString("testType").orEmpty()
+            val typeStr = RouteUtils.decode(encodedType)
+            val testType = TestType.fromString(typeStr)
+
+            if (testViewModel != null) {
+                TestInstructionsScreen(
+                    testType = testType,
+                    viewModel = testViewModel,
+                    onStartTest = {
+                        navController.navigate(Screen.TestActive.route)
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        // Tests Module Destination 3: Active Question Screen
+        composable(Screen.TestActive.route) {
+            if (testViewModel != null) {
+                TestQuestionScreen(
+                    viewModel = testViewModel,
+                    onTestCompleted = { testId ->
+                        navController.navigate(Screen.TestReport.createRoute(testId)) {
+                            popUpTo(Screen.TestsLanding.route)
+                        }
+                    },
+                    onTestAborted = {
+                        navController.popBackStack(Screen.TestsLanding.route, inclusive = false)
+                    }
+                )
+            }
+        }
+
+        // Tests Module Destination 4: Completed Test Report Screen
+        composable(
+            route = Screen.TestReport.route,
+            arguments = listOf(
+                navArgument("testId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val encodedId = backStackEntry.arguments?.getString("testId").orEmpty()
+            val testId = RouteUtils.decode(encodedId)
+
+            if (testViewModel != null) {
+                TestReportScreen(
+                    testId = testId,
+                    viewModel = testViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        // Tests Module Destination 5: Past Tests History Screen
+        composable(Screen.PastTests.route) {
+            if (testViewModel != null) {
+                PastTestsScreen(
+                    viewModel = testViewModel,
+                    onSelectTest = { testId ->
+                        navController.navigate(Screen.TestReport.createRoute(testId))
+                    },
                     onBack = {
                         navController.popBackStack()
                     }
