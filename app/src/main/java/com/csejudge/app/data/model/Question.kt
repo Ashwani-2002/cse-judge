@@ -28,14 +28,18 @@ data class Question(
         if (questionId.isBlank()) errors.add("Question ID is blank in $contextInfo")
         if (subject.isBlank()) errors.add("Subject is blank for question $questionId in $contextInfo")
         if (microtheme.isBlank()) errors.add("Microtheme is blank for question $questionId in $contextInfo")
-        if (question.isEmpty()) errors.add("Question text lines are empty for question $questionId in $contextInfo")
+        if (question.isEmpty() || question.all { it.isBlank() }) {
+            errors.add("Question text lines are empty or blank for question $questionId in $contextInfo")
+        }
         if (options.a.isBlank() || options.b.isBlank() || options.c.isBlank() || options.d.isBlank()) {
             errors.add("One or more options are blank for question $questionId in $contextInfo")
         }
         if (correctAnswer !in VALID_OPTIONS) {
             errors.add("Invalid correct_answer '$correctAnswer' for question $questionId in $contextInfo (expected A, B, C, or D)")
         }
-        if (solution.isEmpty()) errors.add("Solution text lines are empty for question $questionId in $contextInfo")
+        if (solution.isEmpty() || solution.all { it.isBlank() }) {
+            errors.add("Solution text lines are empty or blank for question $questionId in $contextInfo")
+        }
         return errors
     }
 

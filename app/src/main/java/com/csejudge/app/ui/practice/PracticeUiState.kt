@@ -21,6 +21,8 @@ data class PracticeUiState(
     val isNextEnabled: Boolean = false,
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
+    val isBookmarked: Boolean = false,
+    val isBookmarkToggling: Boolean = false,
     val errorMessage: String? = null,
     val isExhausted: Boolean = false,
     val sessionStats: PracticeSessionStats = PracticeSessionStats()

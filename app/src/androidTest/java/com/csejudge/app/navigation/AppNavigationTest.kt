@@ -1,5 +1,6 @@
 package com.csejudge.app.navigation
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
@@ -7,19 +8,24 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
 import com.csejudge.app.data.local.AttemptedQuestionEntity
 import com.csejudge.app.data.model.Options
 import com.csejudge.app.data.model.Question
+import com.csejudge.app.data.repository.AnalysisRepositoryImpl
 import com.csejudge.app.data.repository.PracticeHistoryRepository
 import com.csejudge.app.data.repository.QuestionBankRepository
 import com.csejudge.app.data.repository.QuestionBankStats
+import com.csejudge.app.ui.analysis.AnalysisViewModel
+import com.csejudge.app.ui.practice.CSEJudgeTheme
 import com.csejudge.app.ui.practice.PracticeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -95,9 +101,10 @@ class AppNavigationTest {
                 navController = navController
             )
         }
+        composeTestRule.waitForIdle()
 
         // 1. Home Screen -> Tap tile
-        composeTestRule.onNodeWithTag("PracticeProblemsTile").performClick()
+        composeTestRule.onNodeWithTag("PracticeProblemsTile").assertIsDisplayed().performClick()
         assertEquals(Screen.PracticeFilter.route, navController.currentBackStackEntry?.destination?.route)
 
         // 2. Filter Screen -> Start Practice
@@ -129,9 +136,10 @@ class AppNavigationTest {
                 navController = navController
             )
         }
+        composeTestRule.waitForIdle()
 
         // Navigate to filter screen
-        composeTestRule.onNodeWithTag("PracticeProblemsTile").performClick()
+        composeTestRule.onNodeWithTag("PracticeProblemsTile").assertIsDisplayed().performClick()
 
         // Start practice
         composeTestRule.onNodeWithTag("StartPracticeButton").performClick()
@@ -164,9 +172,10 @@ class AppNavigationTest {
                 navController = navController
             )
         }
+        composeTestRule.waitForIdle()
 
         // Navigate to filter screen
-        composeTestRule.onNodeWithTag("PracticeProblemsTile").performClick()
+        composeTestRule.onNodeWithTag("PracticeProblemsTile").assertIsDisplayed().performClick()
         assertEquals(Screen.PracticeFilter.route, navController.currentBackStackEntry?.destination?.route)
 
         // Turn off Random mode
@@ -192,6 +201,86 @@ class AppNavigationTest {
 
         // Back to home
         composeTestRule.onNodeWithTag("FilterBackButton").performClick()
+        assertEquals(Screen.Home.route, navController.currentBackStackEntry?.destination?.route)
+    }
+
+    @Test
+    fun testThemePreservedAcrossNavigationFlow() {
+        var isDarkState = true
+        var toggleInvoked = false
+
+        composeTestRule.setContent {
+            CSEJudgeTheme(darkTheme = isDarkState) {
+                AppNavHost(
+                    practiceViewModel = practiceViewModel,
+                    isDarkMode = isDarkState,
+                    onToggleTheme = {
+                        toggleInvoked = true
+                        isDarkState = !isDarkState
+                    },
+                    navController = navController
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // 1. Home screen shows dark mode toggle (Sun icon)
+        val toggleButton = composeTestRule.onNodeWithTag("ThemeToggleButton")
+        toggleButton.assertIsDisplayed()
+        toggleButton.assertContentDescriptionEquals("Switch to light mode")
+        composeTestRule.onNodeWithTag("SunIconCanvas", useUnmergedTree = true).assertIsDisplayed()
+
+        // 2. Navigate to Filter screen
+        composeTestRule.onNodeWithTag("PracticeProblemsTile").performClick()
+        assertEquals(Screen.PracticeFilter.route, navController.currentBackStackEntry?.destination?.route)
+
+        // 3. Start Practice
+        composeTestRule.onNodeWithTag("StartPracticeButton").performClick()
+        assertEquals(Screen.PracticeQuestion.route, navController.currentBackStackEntry?.destination?.route)
+
+        // 4. Return to Filter
+        composeTestRule.onNodeWithTag("BackToFilterButton").performClick()
+        assertEquals(Screen.PracticeFilter.route, navController.currentBackStackEntry?.destination?.route)
+
+        // 5. Return to Home
+        composeTestRule.onNodeWithTag("FilterBackButton").performClick()
+        assertEquals(Screen.Home.route, navController.currentBackStackEntry?.destination?.route)
+
+        // 6. Home still displays Sun icon (theme preserved across navigation stack)
+        toggleButton.assertIsDisplayed()
+        toggleButton.assertContentDescriptionEquals("Switch to light mode")
+        composeTestRule.onNodeWithTag("SunIconCanvas", useUnmergedTree = true).assertIsDisplayed()
+
+        toggleButton.performClick()
+        assertTrue(toggleInvoked)
+    }
+
+    @Test
+    fun testTappingAnalysisTileNavigatesToAnalysisScreenAndBack() {
+        val analysisRepository = AnalysisRepositoryImpl(fakeQuestionBankRepo, fakeHistoryRepo)
+        val analysisViewModel = AnalysisViewModel(analysisRepository)
+
+        composeTestRule.setContent {
+            AppNavHost(
+                practiceViewModel = practiceViewModel,
+                analysisViewModel = analysisViewModel,
+                navController = navController
+            )
+        }
+
+        assertEquals(Screen.Home.route, navController.currentBackStackEntry?.destination?.route)
+
+        // Scroll to Analysis tile and click
+        composeTestRule.onNodeWithTag("AnalysisTile").performScrollTo().performClick()
+
+        // Verify navigation to Analysis screen
+        assertEquals(Screen.Analysis.route, navController.currentBackStackEntry?.destination?.route)
+        composeTestRule.onNodeWithTag("AnalysisScreenTitle").assertIsDisplayed()
+
+        // Tap Back button
+        composeTestRule.onNodeWithTag("AnalysisBackButton").performClick()
+
+        // Verify return to Home screen
         assertEquals(Screen.Home.route, navController.currentBackStackEntry?.destination?.route)
     }
 
@@ -257,11 +346,30 @@ class AppNavigationTest {
             return Result.success(Unit)
         }
 
+        override suspend fun recordOrUpdateAttempt(
+            questionId: String,
+            selectedAnswer: String,
+            isCorrect: Boolean,
+            attemptedAt: Long
+        ): Result<Unit> {
+            val entity = AttemptedQuestionEntity(
+                questionId = questionId,
+                selectedAnswer = selectedAnswer,
+                isCorrect = isCorrect,
+                attemptedAt = attemptedAt
+            )
+            attempts[questionId] = entity
+            attemptedIds.add(questionId)
+            return Result.success(Unit)
+        }
+
         override suspend fun isQuestionAttempted(questionId: String): Boolean = attemptedIds.contains(questionId)
         override suspend fun getAllAttemptedQuestionIds(): List<String> = attemptedIds.toList()
         override fun observeAllAttemptedQuestionIds(): Flow<List<String>> = flowOf(attemptedIds.toList())
         override suspend fun getAttempt(questionId: String): AttemptedQuestionEntity? = attempts[questionId]
         override suspend fun getAttemptCount(): Int = attempts.size
         override fun observeAttemptCount(): Flow<Int> = flowOf(attempts.size)
+        override suspend fun getAllAttempts(): List<AttemptedQuestionEntity> = attempts.values.toList()
+        override fun observeAllAttempts(): Flow<List<AttemptedQuestionEntity>> = flowOf(attempts.values.toList())
     }
 }

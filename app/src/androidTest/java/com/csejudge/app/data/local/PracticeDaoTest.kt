@@ -144,6 +144,55 @@ class PracticeDaoTest {
     }
 
     @Test
+    fun testUpsertInsertsNewAttemptWhenNoneExists() = runBlocking {
+        val attempt = AttemptedQuestionEntity(
+            questionId = "POL00010",
+            selectedAnswer = "A",
+            isCorrect = true,
+            attemptedAt = 1000L
+        )
+        dao.upsertAttempt(attempt)
+
+        val retrieved = dao.getAttempt("POL00010")
+        assertNotNull(retrieved)
+        assertEquals("POL00010", retrieved?.questionId)
+        assertEquals("A", retrieved?.selectedAnswer)
+        assertTrue(retrieved?.isCorrect == true)
+        assertEquals(1000L, retrieved?.attemptedAt)
+        assertEquals(1, dao.getAttemptCount())
+    }
+
+    @Test
+    fun testUpsertUpdatesExistingAttemptWithoutCreatingDuplicate() = runBlocking {
+        val initial = AttemptedQuestionEntity(
+            questionId = "POL00010",
+            selectedAnswer = "A",
+            isCorrect = true,
+            attemptedAt = 1000L
+        )
+        dao.insertAttempt(initial)
+        assertEquals(1, dao.getAttemptCount())
+
+        // Upsert re-attempt: changed answer to C, incorrect, new timestamp
+        val reattempt = AttemptedQuestionEntity(
+            questionId = "POL00010",
+            selectedAnswer = "C",
+            isCorrect = false,
+            attemptedAt = 2500L
+        )
+        dao.upsertAttempt(reattempt)
+
+        // Count must still be 1 (exactly one record per questionId)
+        assertEquals(1, dao.getAttemptCount())
+        val updated = dao.getAttempt("POL00010")
+        assertNotNull(updated)
+        assertEquals("POL00010", updated?.questionId)
+        assertEquals("C", updated?.selectedAnswer)
+        assertFalse(updated?.isCorrect == true)
+        assertEquals(2500L, updated?.attemptedAt)
+    }
+
+    @Test
     fun testDataPersistsAcrossDatabaseReopening() = runBlocking {
         val dbFile = File(context.filesDir, "test_persistence.db")
         if (dbFile.exists()) dbFile.delete()
@@ -177,5 +226,21 @@ class PracticeDaoTest {
         // Cleanup
         dbFile.delete()
         Unit
+    }
+
+    @Test
+    fun testGetAllAttemptsAndObserveAllAttempts() = runBlocking {
+        assertEquals(0, dao.getAllAttempts().size)
+
+        val attempt1 = AttemptedQuestionEntity("POL00001", "A", true, 1000L)
+        val attempt2 = AttemptedQuestionEntity("ECO00001", "B", false, 2000L)
+
+        dao.insertAttempt(attempt1)
+        dao.insertAttempt(attempt2)
+
+        val allAttempts = dao.getAllAttempts()
+        assertEquals(2, allAttempts.size)
+        assertTrue(allAttempts.any { it.questionId == "POL00001" && it.isCorrect })
+        assertTrue(allAttempts.any { it.questionId == "ECO00001" && !it.isCorrect })
     }
 }

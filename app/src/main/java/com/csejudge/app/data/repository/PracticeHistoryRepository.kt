@@ -12,12 +12,20 @@ import kotlinx.coroutines.withContext
  */
 interface PracticeHistoryRepository {
     suspend fun recordAttempt(questionId: String, selectedAnswer: String, isCorrect: Boolean): Result<Unit>
+    suspend fun recordOrUpdateAttempt(
+        questionId: String,
+        selectedAnswer: String,
+        isCorrect: Boolean,
+        attemptedAt: Long = System.currentTimeMillis()
+    ): Result<Unit>
     suspend fun isQuestionAttempted(questionId: String): Boolean
     suspend fun getAllAttemptedQuestionIds(): List<String>
     fun observeAllAttemptedQuestionIds(): Flow<List<String>>
     suspend fun getAttempt(questionId: String): AttemptedQuestionEntity?
     suspend fun getAttemptCount(): Int
     fun observeAttemptCount(): Flow<Int>
+    suspend fun getAllAttempts(): List<AttemptedQuestionEntity>
+    fun observeAllAttempts(): Flow<List<AttemptedQuestionEntity>>
 }
 
 class PracticeHistoryRepositoryImpl(
@@ -38,6 +46,23 @@ class PracticeHistoryRepositoryImpl(
                 attemptedAt = System.currentTimeMillis()
             )
             practiceDao.insertAttempt(entity)
+        }
+    }
+
+    override suspend fun recordOrUpdateAttempt(
+        questionId: String,
+        selectedAnswer: String,
+        isCorrect: Boolean,
+        attemptedAt: Long
+    ): Result<Unit> = withContext(ioDispatcher) {
+        runCatching {
+            val entity = AttemptedQuestionEntity(
+                questionId = questionId,
+                selectedAnswer = selectedAnswer,
+                isCorrect = isCorrect,
+                attemptedAt = attemptedAt
+            )
+            practiceDao.upsertAttempt(entity)
         }
     }
 
@@ -63,5 +88,13 @@ class PracticeHistoryRepositoryImpl(
 
     override fun observeAttemptCount(): Flow<Int> {
         return practiceDao.observeAttemptCount()
+    }
+
+    override suspend fun getAllAttempts(): List<AttemptedQuestionEntity> = withContext(ioDispatcher) {
+        practiceDao.getAllAttempts()
+    }
+
+    override fun observeAllAttempts(): Flow<List<AttemptedQuestionEntity>> {
+        return practiceDao.observeAllAttempts()
     }
 }

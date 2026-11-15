@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.csejudge.app.data.model.Question
+import com.csejudge.app.ui.bookmark.BookmarkStarButton
 
 /**
  * Stateful entry point for the Question Practice screen.
@@ -61,6 +62,7 @@ fun PracticeQuestionScreen(
         onNext = { viewModel.nextQuestion() },
         onBackToFilter = onBackToFilter,
         onClearError = { viewModel.clearError() },
+        onToggleBookmark = { viewModel.toggleBookmark() },
         modifier = modifier
     )
 }
@@ -76,6 +78,7 @@ fun PracticeQuestionContent(
     onNext: () -> Unit,
     onBackToFilter: () -> Unit,
     onClearError: () -> Unit,
+    onToggleBookmark: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -128,10 +131,11 @@ fun PracticeQuestionContent(
                             // Crucial bottom padding so scrollable content is NEVER hidden behind fixed action button
                             .padding(bottom = 96.dp + navBarPadding.calculateBottomPadding())
                     ) {
-                        // Top Header: Subject, Microtheme badge, and Back to Filter
+                        // Top Header: Subject, Microtheme badge, Bookmark Star button, and Back to Filter
                         HeaderSection(
                             uiState = uiState,
-                            onBackToFilter = onBackToFilter
+                            onBackToFilter = onBackToFilter,
+                            onToggleBookmark = onToggleBookmark
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -204,12 +208,13 @@ fun PracticeQuestionContent(
 }
 
 /**
- * Top header containing breadcrumb info, restrained session stats, and back button.
+ * Top header containing breadcrumb info, restrained session stats, and action buttons.
  */
 @Composable
 private fun HeaderSection(
     uiState: PracticeUiState,
-    onBackToFilter: () -> Unit
+    onBackToFilter: () -> Unit,
+    onToggleBookmark: () -> Unit
 ) {
     val q = uiState.currentQuestion ?: return
 
@@ -254,19 +259,33 @@ private fun HeaderSection(
             )
         }
 
-        // Change Filter / Back Button
-        OutlinedButton(
-            onClick = onBackToFilter,
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-            shape = RoundedCornerShape(6.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, PracticeColors.BorderNeutral),
-            modifier = Modifier.testTag("BackToFilterButton")
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Actions: Bookmark Star Button immediately to the left of the Filters button
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Filters",
-                style = MaterialTheme.typography.labelMedium,
-                color = PracticeColors.TextSecondary
+            BookmarkStarButton(
+                isBookmarked = uiState.isBookmarked,
+                isLoading = uiState.isBookmarkToggling,
+                onClick = onToggleBookmark
             )
+
+            // Change Filter / Back Button
+            OutlinedButton(
+                onClick = onBackToFilter,
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(6.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, PracticeColors.BorderNeutral),
+                modifier = Modifier.testTag("BackToFilterButton")
+            ) {
+                Text(
+                    text = "Filters",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = PracticeColors.TextSecondary
+                )
+            }
         }
     }
 }
@@ -434,7 +453,7 @@ private fun FixedActionButtonArea(
                 onClick = onSkip,
                 enabled = uiState.isSkipEnabled && !uiState.isSubmitting,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
+                    containerColor = PracticeColors.SkipButtonBackground,
                     contentColor = PracticeColors.SkipButtonText,
                     disabledContainerColor = PracticeColors.BorderNeutral,
                     disabledContentColor = PracticeColors.TextSecondary

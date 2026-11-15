@@ -198,7 +198,7 @@ fun PracticeFilterContent(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Practice questions uniformly across all 7 subjects",
+                            text = "Practice questions uniformly across all subjects",
                             style = MaterialTheme.typography.bodySmall,
                             color = PracticeColors.TextSecondary
                         )
@@ -208,9 +208,9 @@ fun PracticeFilterContent(
                         checked = uiState.isRandomMode,
                         onCheckedChange = onToggleRandom,
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
+                            checkedThumbColor = PracticeColors.OnPrimary,
                             checkedTrackColor = PracticeColors.PrimaryNavy,
-                            uncheckedThumbColor = Color.White,
+                            uncheckedThumbColor = PracticeColors.TextSecondary,
                             uncheckedTrackColor = PracticeColors.BorderNeutral
                         ),
                         modifier = Modifier.testTag("RandomModeSwitch")
@@ -276,7 +276,7 @@ fun PracticeFilterContent(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color.White,
+                        color = PracticeColors.OnPrimary,
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(10.dp))

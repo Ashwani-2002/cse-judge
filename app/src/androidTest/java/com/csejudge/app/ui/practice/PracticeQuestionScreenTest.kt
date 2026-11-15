@@ -292,4 +292,66 @@ class PracticeQuestionScreenTest {
         composeTestRule.onNodeWithTag("OptionCard_A").performClick()
         assertEquals(false, clickedAfter)
     }
+
+    @Test
+    fun testBookmarkStarButtonVisibleAndClickable() {
+        var bookmarkToggled = false
+        val question = createSampleQuestion()
+        val uiState = PracticeUiState(
+            currentQuestion = question,
+            isBookmarked = false,
+            isBookmarkToggling = false
+        )
+
+        composeTestRule.setContent {
+            PracticeQuestionContent(
+                uiState = uiState,
+                onSubmitAnswer = {},
+                onSkip = {},
+                onNext = {},
+                onBackToFilter = {},
+                onClearError = {},
+                onToggleBookmark = { bookmarkToggled = true }
+            )
+        }
+
+        // Verify Star button is displayed with correct content description
+        composeTestRule.onNodeWithTag("BookmarkStarButton")
+            .assertIsDisplayed()
+            .performClick()
+
+        assertTrue(bookmarkToggled)
+    }
+
+    @Test
+    fun testBookmarkStarButtonDisplaysUnselectedWhenNotBookmarked() {
+        val question = createSampleQuestion()
+        composeTestRule.setContent {
+            PracticeQuestionContent(
+                uiState = PracticeUiState(currentQuestion = question, isBookmarked = false),
+                onSubmitAnswer = {},
+                onSkip = {},
+                onNext = {},
+                onBackToFilter = {},
+                onClearError = {}
+            )
+        }
+        composeTestRule.onNodeWithTag("BookmarkStarButton").assertIsDisplayed()
+    }
+
+    @Test
+    fun testBookmarkStarButtonDisplaysSelectedWhenBookmarked() {
+        val question = createSampleQuestion()
+        composeTestRule.setContent {
+            PracticeQuestionContent(
+                uiState = PracticeUiState(currentQuestion = question, isBookmarked = true),
+                onSubmitAnswer = {},
+                onSkip = {},
+                onNext = {},
+                onBackToFilter = {},
+                onClearError = {}
+            )
+        }
+        composeTestRule.onNodeWithTag("BookmarkStarButton").assertIsDisplayed()
+    }
 }

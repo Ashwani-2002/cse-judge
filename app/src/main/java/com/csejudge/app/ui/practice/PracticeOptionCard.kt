@@ -61,21 +61,21 @@ fun PracticeOptionCard(
             backgroundColor = PracticeColors.CorrectBackground
             borderColor = PracticeColors.CorrectBorder
             badgeBackgroundColor = PracticeColors.CorrectBorder
-            badgeTextColor = Color.White
+            badgeTextColor = PracticeColors.CorrectBadgeText
             textColor = PracticeColors.CorrectText
         }
         OptionVisualState.SELECTED_INCORRECT -> {
             backgroundColor = PracticeColors.IncorrectBackground
             borderColor = PracticeColors.IncorrectBorder
             badgeBackgroundColor = PracticeColors.IncorrectBorder
-            badgeTextColor = Color.White
+            badgeTextColor = PracticeColors.IncorrectBadgeText
             textColor = PracticeColors.IncorrectText
         }
         OptionVisualState.UNSELECTED_CORRECT -> {
             backgroundColor = PracticeColors.CorrectBackground
             borderColor = PracticeColors.CorrectBorder
             badgeBackgroundColor = PracticeColors.CorrectBorder
-            badgeTextColor = Color.White
+            badgeTextColor = PracticeColors.CorrectBadgeText
             textColor = PracticeColors.CorrectText
         }
         OptionVisualState.DISABLED_NEUTRAL -> {

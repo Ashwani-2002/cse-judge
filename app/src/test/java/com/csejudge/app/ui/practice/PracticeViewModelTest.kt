@@ -537,6 +537,23 @@ class PracticeViewModelTest {
             return Result.success(Unit)
         }
 
+        override suspend fun recordOrUpdateAttempt(
+            questionId: String,
+            selectedAnswer: String,
+            isCorrect: Boolean,
+            attemptedAt: Long
+        ): Result<Unit> {
+            val entity = AttemptedQuestionEntity(
+                questionId = questionId,
+                selectedAnswer = selectedAnswer,
+                isCorrect = isCorrect,
+                attemptedAt = attemptedAt
+            )
+            attempts[questionId] = entity
+            attemptedIds.add(questionId)
+            return Result.success(Unit)
+        }
+
         override suspend fun isQuestionAttempted(questionId: String): Boolean = attemptedIds.contains(questionId)
 
         override suspend fun getAllAttemptedQuestionIds(): List<String> = attemptedIds.toList()
@@ -548,5 +565,9 @@ class PracticeViewModelTest {
         override suspend fun getAttemptCount(): Int = attempts.size
 
         override fun observeAttemptCount(): Flow<Int> = flowOf(attempts.size)
+
+        override suspend fun getAllAttempts(): List<AttemptedQuestionEntity> = attempts.values.toList()
+
+        override fun observeAllAttempts(): Flow<List<AttemptedQuestionEntity>> = flowOf(attempts.values.toList())
     }
 }

@@ -3,6 +3,7 @@ package com.csejudge.app.ui.practice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.csejudge.app.data.model.Question
+import com.csejudge.app.data.repository.BookmarkRepository
 import com.csejudge.app.data.repository.PracticeHistoryRepository
 import com.csejudge.app.data.repository.QuestionBankRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,11 +32,12 @@ data class PracticeFilter(
 /**
  * ViewModel managing practice session state, mode/subject/microtheme filtering,
  * random unattempted question selection, deferred skip-cycling, answer evaluation,
- * and asynchronous attempt persistence.
+ * asynchronous attempt persistence, and bookmark state.
  */
 class PracticeViewModel(
     private val questionBankRepository: QuestionBankRepository,
     private val practiceHistoryRepository: PracticeHistoryRepository,
+    private val bookmarkRepository: BookmarkRepository? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val random: Random = Random.Default
 ) : ViewModel() {
@@ -238,6 +240,12 @@ class PracticeViewModel(
                 val session = PracticeSession(unattemptedQuestions, random)
                 currentSession = session
 
+                val isBookmarked = session.currentQuestion?.let { q ->
+                    withContext(ioDispatcher) {
+                        bookmarkRepository?.isBookmarked(q.questionId)
+                    }
+                } ?: false
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -251,7 +259,8 @@ class PracticeViewModel(
                         correctAnswer = null,
                         isSkipEnabled = session.currentQuestion != null,
                         isNextEnabled = false,
-                        sessionStats = session.stats
+                        sessionStats = session.stats,
+                        isBookmarked = isBookmarked
                     )
                 }
             } catch (e: Exception) {
@@ -347,9 +356,11 @@ class PracticeViewModel(
                 correctAnswer = null,
                 isSkipEnabled = nextQ != null,
                 isNextEnabled = false,
-                sessionStats = session.stats
+                sessionStats = session.stats,
+                isBookmarked = false
             )
         }
+        updateBookmarkStatusForCurrentQuestion(nextQ?.questionId)
     }
 
     /**
@@ -372,8 +383,67 @@ class PracticeViewModel(
                 correctAnswer = null,
                 isSkipEnabled = nextQ != null,
                 isNextEnabled = false,
-                sessionStats = session.stats
+                sessionStats = session.stats,
+                isBookmarked = false
             )
+        }
+        updateBookmarkStatusForCurrentQuestion(nextQ?.questionId)
+    }
+
+    /**
+     * Toggles bookmark status for the currently displayed question.
+     * Guards against rapid taps and updates UI state immediately on success.
+     */
+    fun toggleBookmark() {
+        val state = _uiState.value
+        val currentQ = state.currentQuestion ?: return
+        val repo = bookmarkRepository ?: return
+        if (state.isBookmarkToggling || state.isLoading) return
+
+        val questionId = currentQ.questionId
+        val currentlyBookmarked = state.isBookmarked
+
+        _uiState.update { it.copy(isBookmarkToggling = true) }
+
+        viewModelScope.launch(ioDispatcher) {
+            val result = if (currentlyBookmarked) {
+                repo.removeBookmark(questionId)
+            } else {
+                repo.addBookmark(questionId)
+            }
+
+            if (result.isSuccess) {
+                if (_uiState.value.currentQuestion?.questionId == questionId) {
+                    _uiState.update {
+                        it.copy(
+                            isBookmarked = !currentlyBookmarked,
+                            isBookmarkToggling = false
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isBookmarkToggling = false) }
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isBookmarkToggling = false,
+                        errorMessage = "Failed to update bookmark: ${result.exceptionOrNull()?.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateBookmarkStatusForCurrentQuestion(questionId: String?) {
+        if (questionId == null || bookmarkRepository == null) {
+            _uiState.update { it.copy(isBookmarked = false) }
+            return
+        }
+        viewModelScope.launch(ioDispatcher) {
+            val bookmarked = bookmarkRepository.isBookmarked(questionId)
+            if (_uiState.value.currentQuestion?.questionId == questionId) {
+                _uiState.update { it.copy(isBookmarked = bookmarked) }
+            }
         }
     }
 

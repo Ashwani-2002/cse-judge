@@ -1,0 +1,94 @@
+{
+  "questions": [
+    {
+      "question_id": "ETH00001",
+      "subject": "Ethics",
+      "microtheme": "Human Values",
+      "question": [
+        "Ethics and Human Interface Question 1: What is the primary role of foundational human values in public administration?"
+      ],
+      "options": {
+        "A": "Promoting integrity and ethical public conduct (Option A for ETH00001)",
+        "B": "Maximizing administrative discretionary power (Option B for ETH00001)",
+        "C": "Eliminating judicial scrutiny of civil services (Option C for ETH00001)",
+        "D": "Prioritizing procedural compliance over public welfare (Option D for ETH00001)"
+      },
+      "correct_answer": "A",
+      "solution": [
+        "Option (a) is correct: Foundational human values foster integrity, empathy, and probity in governance for question 1."
+      ]
+    },
+    {
+      "question_id": "ETH00002",
+      "subject": "Ethics",
+      "microtheme": "Human Values",
+      "question": [
+        "Ethics and Human Interface Question 2: What is the primary role of foundational human values in public administration?"
+      ],
+      "options": {
+        "A": "Promoting integrity and ethical public conduct (Option A for ETH00002)",
+        "B": "Maximizing administrative discretionary power (Option B for ETH00002)",
+        "C": "Eliminating judicial scrutiny of civil services (Option C for ETH00002)",
+        "D": "Prioritizing procedural compliance over public welfare (Option D for ETH00002)"
+      },
+      "correct_answer": "A",
+      "solution": [
+        "Option (a) is correct: Foundational human values foster integrity, empathy, and probity in governance for question 2."
+      ]
+    },
+    {
+      "question_id": "ETH00003",
+      "subject": "Ethics",
+      "microtheme": "Human Values",
+      "question": [
+        "Ethics and Human Interface Question 3: What is the primary role of foundational human values in public administration?"
+      ],
+      "options": {
+        "A": "Promoting integrity and ethical public conduct (Option A for ETH00003)",
+        "B": "Maximizing administrative discretionary power (Option B for ETH00003)",
+        "C": "Eliminating judicial scrutiny of civil services (Option C for ETH00003)",
+        "D": "Prioritizing procedural compliance over public welfare (Option D for ETH00003)"
+      },
+      "correct_answer": "A",
+      "solution": [
+        "Option (a) is correct: Foundational human values foster integrity, empathy, and probity in governance for question 3."
+      ]
+    },
+    {
+      "question_id": "ETH00004",
+      "subject": "Ethics",
+      "microtheme": "Human Values",
+      "question": [
+        "Ethics and Human Interface Question 4: What is the primary role of foundational human values in public administration?"
+      ],
+      "options": {
+        "A": "Promoting integrity and ethical public conduct (Option A for ETH00004)",
+        "B": "Maximizing administrative discretionary power (Option B for ETH00004)",
+        "C": "Eliminating judicial scrutiny of civil services (Option C for ETH00004)",
+        "D": "Prioritizing procedural compliance over public welfare (Option D for ETH00004)"
+      },
+      "correct_answer": "A",
+      "solution": [
+        "Option (a) is correct: Foundational human values foster integrity, empathy, and probity in governance for question 4."
+      ]
+    },
+    {
+      "question_id": "ETH00005",
+      "subject": "Ethics",
+      "microtheme": "Human Values",
+      "question": [
+        "Ethics and Human Interface Question 5: What is the primary role of foundational human values in public administration?"
+      ],
+      "options": {
+        "A": "Promoting integrity and ethical public conduct (Option A for ETH00005)",
+        "B": "Maximizing administrative discretionary power (Option B for ETH00005)",
+        "C": "Eliminating judicial scrutiny of civil services (Option C for ETH00005)",
+        "D": "Prioritizing procedural compliance over public welfare (Option D for ETH00005)"
+      },
+      "correct_answer": "A",
+      "solution": [
+        "Option (a) is correct: Foundational human values foster integrity, empathy, and probity in governance for question 5."
+      ]
+    }
+  ]
+}

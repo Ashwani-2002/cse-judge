@@ -95,6 +95,21 @@ class PracticeHistoryRepositoryTest {
         assertNull(repository.getAttempt("NON_EXISTENT"))
     }
 
+    @Test
+    fun testGetAllAttemptsAndObserveAllAttempts() = runTest(testDispatcher) {
+        assertTrue(repository.getAllAttempts().isEmpty())
+        assertTrue(repository.observeAllAttempts().first().isEmpty())
+
+        repository.recordAttempt("Q1", "A", true)
+        repository.recordAttempt("Q2", "B", false)
+
+        val attempts = repository.getAllAttempts()
+        assertEquals(2, attempts.size)
+        assertEquals(2, repository.observeAllAttempts().first().size)
+        assertTrue(attempts.any { it.questionId == "Q1" && it.isCorrect })
+        assertTrue(attempts.any { it.questionId == "Q2" && !it.isCorrect })
+    }
+
     private class FakePracticeDao : PracticeDao {
         private val attempts = mutableMapOf<String, AttemptedQuestionEntity>()
 
@@ -102,6 +117,10 @@ class PracticeHistoryRepositoryTest {
             if (attempts.containsKey(attempt.questionId)) {
                 throw SQLiteConstraintException("UNIQUE constraint failed: attempted_questions.question_id")
             }
+            attempts[attempt.questionId] = attempt
+        }
+
+        override suspend fun upsertAttempt(attempt: AttemptedQuestionEntity) {
             attempts[attempt.questionId] = attempt
         }
 
@@ -127,6 +146,14 @@ class PracticeHistoryRepositoryTest {
 
         override fun observeAttemptCount(): Flow<Int> {
             return flowOf(attempts.size)
+        }
+
+        override suspend fun getAllAttempts(): List<AttemptedQuestionEntity> {
+            return attempts.values.toList()
+        }
+
+        override fun observeAllAttempts(): Flow<List<AttemptedQuestionEntity>> {
+            return flowOf(attempts.values.toList())
         }
     }
 }

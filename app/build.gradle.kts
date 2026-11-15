@@ -9,28 +9,37 @@ android {
     namespace = "com.csejudge.app"
     compileSdk = 37
 
+    val qbDir = project.findProperty("qbDir") as? String ?: "$rootDir/question-bank"
+    val vCode = (project.findProperty("appVersionCode") as? String)?.toIntOrNull() ?: 1
+    val vName = (project.findProperty("appVersionName") as? String) ?: "1.0"
+
     defaultConfig {
         applicationId = "com.csejudge.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = vCode
+        versionName = vName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets {
         getByName("main") {
-            assets.directories.add("$rootDir/question-bank")
+            assets.directories.add(qbDir)
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -57,6 +66,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.room.runtime)
