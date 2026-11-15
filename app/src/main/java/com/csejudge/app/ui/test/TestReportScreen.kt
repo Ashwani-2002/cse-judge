@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.csejudge.app.data.model.SubjectTestPerformance
 import com.csejudge.app.data.model.TestQuestionDetail
 import com.csejudge.app.data.model.TestReport
+import com.csejudge.app.ui.ai.AiExplanationButton
 import com.csejudge.app.ui.bookmark.BookmarkStarButton
 import com.csejudge.app.ui.practice.PracticeColors
 import java.text.SimpleDateFormat
@@ -554,6 +555,10 @@ fun ReportQuestionCard(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            AiExplanationButton(detail = detail)
         }
     }
 }

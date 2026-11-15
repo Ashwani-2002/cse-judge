@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.csejudge.app.data.model.Question
+import com.csejudge.app.ui.ai.AiExplanationButton
 import com.csejudge.app.ui.practice.OptionVisualState
 import com.csejudge.app.ui.practice.PracticeColors
 import com.csejudge.app.ui.practice.PracticeOptionCard
@@ -174,6 +175,8 @@ fun BookmarkQuestionContent(
                         if (qState.isAttempted) {
                             Spacer(modifier = Modifier.height(24.dp))
                             BookmarkSolutionSection(question = question)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            AiExplanationButton(question = question)
                         }
                     }
 

@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.csejudge.app.data.model.Question
+import com.csejudge.app.ui.ai.AiExplanationButton
 import com.csejudge.app.ui.bookmark.BookmarkStarButton
 
 /**
@@ -165,6 +166,8 @@ fun PracticeQuestionContent(
                         if (uiState.isAnswered) {
                             Spacer(modifier = Modifier.height(24.dp))
                             SolutionSection(question = question)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            AiExplanationButton(question = question)
                         }
                     }
 
